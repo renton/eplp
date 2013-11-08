@@ -19,6 +19,9 @@ class Artist(models.Model):
     @staticmethod
     def get_artist(name,eplp_interface):
 
+        if name in ["Agent Ribbons"]:
+            return None
+
         artist,created = Artist.objects.get_or_create(name=name)
 
         if created:
@@ -67,8 +70,9 @@ class Profile(models.Model):
 
         for artist_data in artists_data:
             obj = Artist.get_artist(artist_data[0].get_name(),eplp)
-            print obj.name.encode('utf-8')
-            self.top_artists.add(obj)
+            if obj:
+                print obj.name.encode('utf-8')
+                self.top_artists.add(obj)
         
         self.save()
 
@@ -95,23 +99,26 @@ class Profile(models.Model):
 
             for similar in similars:
                 match_value = similar[1]
+
                 similar_artist = Artist.get_artist(similar[0].get_name(),eplp)
-                name = similar_artist.name
 
-                if name not in my_artists:
+                if similar_artist:
+                    name = similar_artist.name
 
-                    if name in rec_artists:
-                        rec_artists[name]['num'] += 1 
-                        rec_artists[name]['match'] += match_value
-                    else:
+                    if name not in my_artists:
 
-                        rec_artists[name] = {
-                                                'num':1,
-                                                'match':match_value,
-                                                'pop':similar_artist.listeners,
-                                                'obj':similar_artist,
-                                            }
-                    print rec_artists[name]['num'], name, rec_artists[name]['match'], rec_artists[name]['pop']
+                        if name in rec_artists:
+                            rec_artists[name]['num'] += 1 
+                            rec_artists[name]['match'] += match_value
+                        else:
+
+                            rec_artists[name] = {
+                                                    'num':1,
+                                                    'match':match_value,
+                                                    'pop':similar_artist.listeners,
+                                                    'obj':similar_artist,
+                                                }
+                        print rec_artists[name]['num'], name, rec_artists[name]['match'], rec_artists[name]['pop']
 
         
         for k,v in rec_artists.items():
