@@ -1,0 +1,46 @@
+{% extends "main.html" %}
+
+{% block content %}
+
+
+    <table class="table table-striped">
+        <tr>
+            <th>&nbsp;</th>
+            <th>Artist</th>
+            <th>Listeners</th>
+            <th>Occurences</th>
+            <th>Match Score</th>
+            <th>eplp Score</th>
+        </tr>
+    {% for rec in recommendations %}
+        <tr>
+            <td>
+                <img src="{{ rec.artist.image }}" style="float:left;" width="100" height="100"/>
+                {{ rec.get_percents.0 }}
+            </td>
+
+            <td>
+                <a href="{{ rec.artist.url }}">{{ rec.artist.name }}</a>
+                <div class="profile-vs">
+                    <img class="left" src="{{ u1_pic }}" width="40" height="40" />
+                    <img class="right" src="{{ u2_pic }}" width="40" height="40" />
+                    <div style="clear:both"></div>
+                </div>
+                <div class="progress progress-striped">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ rec.get_percents.0}}" aria-valuemin="0" aria-valuemax="100" style="width: {{ rec.get_percents.0}}%">
+                        <span class="sr-only"></span>
+                    </div>
+                    <div class="progress-bar progress-bar-danger" style="width: {{ rec.get_percents.1 }}%">
+                        <span class="sr-only"></span>
+                    </div>
+                </div>
+            </td>
+            <td>{{ rec.artist.listeners }}</td>
+            <td>{{ rec.occurences }}</td>
+            <td>{{ rec.match_sum }}</td>
+            <td>{{ rec.eplp_score }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+
+{% endblock content %}

@@ -1,0 +1,30 @@
+{% extends "main.html" %}
+
+{% block content %}
+
+
+    <table class="table table-striped">
+        <tr>
+            <th>&nbsp;</th>
+            <th>Artist</th>
+            <th>Listeners</th>
+            <th>Occurences</th>
+            <th>Match Score</th>
+            <th>eplp Score</th>
+        </tr>
+    {% for rec in recommendations %}
+        <tr>
+            <td>
+                <img src="{{ rec.artist.image }}" style="float:left;" width="100" height="100"/>
+            </td>
+
+            <td><a href="{{ rec.artist.url }}">{{ rec.artist.name }}</a></td>
+            <td>{{ rec.artist.listeners }}</td>
+            <td>{{ rec.occurences }}</td>
+            <td>{{ rec.match_sum }}</td>
+            <td>{{ rec.eplp_score }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+
+{% endblock content %}

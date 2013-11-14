@@ -1,3 +1,9 @@
+ul {
+    list-style-type:none;
+    margin:0px;
+    padding:0px;
+}
+
 body {
   padding-top: 50px;
 }
@@ -7,3 +13,26 @@ body {
   text-align: center;
 }
 
+ul.top-artists {
+    margin-top:50px;
+}
+
+ul.top-artists li {
+    float:left;
+    text-align:center;
+    margin-right:30px;
+    margin-bottom:30px;
+}
+
+.profile-vs {
+    width:100%;
+    padding:10px;
+}
+
+.left {
+    float:left;
+}
+
+.right {
+    float:right;
+}

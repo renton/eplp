@@ -2,13 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from tools import EplpInterface
 import hashlib
-m = hashlib.md5()
-m.update("000005fab4534d05api_key9a0554259914a86fb9e7eb014e4e5d52permswrite")
-print m.hexdigest()
 
 class Artist(models.Model):
     name        = models.CharField(max_length=255)
-    mbid        = models.CharField(max_length=255,unique=True)
+    mbid        = models.CharField(max_length=255)
     url         = models.CharField(max_length=255)
     image       = models.CharField(max_length=255)
     listeners   = models.IntegerField(default=0)
@@ -19,7 +16,7 @@ class Artist(models.Model):
     @staticmethod
     def get_artist(name,eplp_interface):
 
-        if name in ["Agent Ribbons"]:
+        if name in ["Agent Ribbons","Bachelorette"]:
             return None
 
         artist,created = Artist.objects.get_or_create(name=name)
@@ -37,6 +34,9 @@ class Artist(models.Model):
             artist.mbid = artist_mbid
 
             artist.url = lfm_artist.get_url()
+            if len(artist.url) > 250:
+                print "***LONG URL "+artist.url
+                artist.url = "#"
 
             cover_image = lfm_artist.get_cover_image()
             if cover_image:
@@ -131,6 +131,35 @@ class Profile(models.Model):
                                 rec_artists[k]['eplp_score'],
                             )
 
+    def generate_recommendation_matches(self,match_user):
+
+        u1_recs = RecommendedArtist.objects.filter(user=self)
+        u2_recs = RecommendedArtist.objects.filter(user=match_user)
+
+        u2_lookup = {}
+        for rec in u2_recs:
+            u2_lookup[rec.artist.name]={"num":rec.occurences,"match":rec.match_sum}
+
+        for rec in u1_recs:
+            if rec.artist.name in u2_lookup:
+                print rec.artist.name+" in both"
+                listeners = rec.artist.listeners
+                u1_match_sum = rec.match_sum
+                u2_match_sum = u2_lookup[rec.artist.name]['match']
+                match_sum = u1_match_sum+u2_match_sum
+                eplp_score = rec.artist.listeners / (match_sum ** 3)
+                occurences = rec.occurences + u2_lookup[rec.artist.name]['num']
+                print listeners,u1_match_sum,u2_match_sum,match_sum,eplp_score,occurences
+                RecommendedMatch.add_recommendation_match(
+                                                            self,
+                                                            match_user,
+                                                            rec.artist,
+                                                            occurences,
+                                                            match_sum,
+                                                            eplp_score,
+                                                            u1_match_sum,
+                                                            u2_match_sum)
+
 
 class RecommendedArtist(models.Model):
     user        = models.ForeignKey(Profile)
@@ -158,3 +187,69 @@ class RecommendedArtist(models.Model):
             rec.save()
 
         return rec
+
+class RecommendedMatch(models.Model):
+    pair_key    = models.CharField(max_length=255)
+    
+    u1          = models.ForeignKey(Profile,related_name="user1",null=True)
+    u2          = models.ForeignKey(Profile,related_name="user2",null=True)
+
+    artist      = models.ForeignKey(Artist)
+
+    u1_match_sum= models.FloatField(default=0)
+    u2_match_sum= models.FloatField(default=0)
+
+    occurences  = models.IntegerField(default=0)
+    match_sum   = models.FloatField(default=0)
+    eplp_score  = models.FloatField(default=0)
+
+    def __unicode__(self):
+        return self.u1.lastfm_username+" | "+self.u2.lastfm_username+" | "+self.artist.name
+
+    @property
+    def get_percents(self):
+        u1_per = (self.u1_match_sum / self.match_sum)*100
+        u2_per = 100 - u1_per
+        return (u1_per,u2_per)
+
+    @staticmethod
+    def generate_pair_key(u1,u2):
+        key_builder = []
+        key_builder.append(u1.lastfm_username)
+        key_builder.append(u2.lastfm_username)
+        key_builder.sort()
+
+        pair_key = ""
+        for name in key_builder:
+            pair_key += name+"|"
+        return pair_key
+
+    @staticmethod
+    def add_recommendation_match(u1,u2,artist,occurences,match_sum,eplp_score,u1_match_sum,u2_match_sum):
+
+        u1_match_percent = (u1_match_sum/match_sum)*100
+
+        if u1_match_percent >= 30 and u1_match_percent <= 70:
+
+            pair_key = RecommendedMatch.generate_pair_key(u1,u2)
+
+            rec,created = RecommendedMatch.objects.get_or_create(
+                                                            pair_key=pair_key,
+                                                            artist=artist,
+                                                            )
+
+            if created:
+                rec.u1 = u1
+                rec.u2 = u2
+                rec.occurences = occurences
+                rec.match_sum = match_sum
+                rec.eplp_score = eplp_score
+                rec.u1_match_sum = u1_match_sum
+                rec.u2_match_sum = u2_match_sum
+                rec.save()
+
+            return rec
+
+        return None
+
+

@@ -2,10 +2,15 @@
 
 {% block content %}
 
+    <ul class="top-artists">
     {% for artist in artists %}
-        <img src="{{ artist.image }}" style="float:left;" width="100" height="100"/>
-        <div style="float:left;"><a href="{{ artist.url }}">{{ artist.name }}</a></div>
-        <div style="clear:both"></div>
+        <li>
+            <a href="{{ artist.url }}">
+                <img src="{{ artist.image }}" width="100" height="100"/>
+            </a>
+            <div><a href="{{ artist.url }}">{{ artist.name }}</a></div>
+        </li>
     {% endfor %}
+    </ul>
 
 {% endblock content %}
